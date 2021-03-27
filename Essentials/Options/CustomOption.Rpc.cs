@@ -48,7 +48,7 @@ namespace Essentials.Options
             {
                 foreach ((string ID, CustomOptionType Type, object Value) option in data.Options)
                 {
-                    writer.Write(option.ID);
+                    writer.Write(int.Parse(option.ID));
                     writer.Write((int)option.Type);
                     if (option.Type == CustomOptionType.Toggle) writer.Write((bool)option.Value);
                     else if (option.Type == CustomOptionType.Number) writer.Write((float)option.Value);
@@ -61,7 +61,7 @@ namespace Essentials.Options
                 List<(string, CustomOptionType, object)> options = new List<(string, CustomOptionType, object)>();
                 while (reader.BytesRemaining > 0)
                 {
-                    string id = reader.ReadString();
+                    string id = reader.ReadInt32().ToString();
                     CustomOptionType type = (CustomOptionType)reader.ReadInt32();
                     object value = null;
                     if (type == CustomOptionType.Toggle) value = reader.ReadBoolean();

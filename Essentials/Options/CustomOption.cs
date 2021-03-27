@@ -22,7 +22,8 @@ namespace Essentials.Options
         /// <summary>
         /// A string setting (underlying int) with forward/back arrows.
         /// </summary>
-        String
+        String,
+        Header,
     }
 
     /// <summary>
@@ -30,6 +31,8 @@ namespace Essentials.Options
     /// </summary>
     public partial class CustomOption
     {
+
+        public bool Indent = false;
         /// <summary>
         /// The list of all the added custom options.
         /// </summary>
@@ -39,7 +42,7 @@ namespace Essentials.Options
         /// Enables or disables the credit string appended to the option list in the lobby.
         /// Please provide credit or reference elsewhere if you disable this.
         /// </summary>
-        public static bool ShamelessPlug { get; set; } = true;
+        public static bool ShamelessPlug { get; set; } = false;
 
         /// <summary>
         /// Enables debug logging messages.
@@ -155,7 +158,7 @@ namespace Essentials.Options
             ConfigID = id;
 
             //string Id = ID = $"{nameof(CustomOption)}_{PluginID}_{id}";
-            string Id = ID = $"{PluginID}_{id}";
+            string Id = ID = id;
             Name = name;
 
             SaveValue = saveValue;
@@ -245,6 +248,11 @@ namespace Essentials.Options
             return new CustomToggleOption(id, name, saveValue, value);
         }
 
+        public static CustomHeaderOption AddHeader(string id, string name)
+        {
+            return new CustomHeaderOption(id, name);
+        }
+
         /// <summary>
         /// Adds a toggle option.
         /// </summary>
@@ -287,9 +295,9 @@ namespace Essentials.Options
         /// <param name="min">The lowest value permitted, may be overriden if <paramref name="value"/> is lower</param>
         /// <param name="max">The highest value permitted, may be overriden if <paramref name="value"/> is higher</param>
         /// <param name="increment">The increment or decrement steps when <see cref="CustomNumberOption.Increase"/> or <see cref="CustomNumberOption.Decrease"/> are called</param>
-        public static CustomNumberOption AddNumber(string id, string name, bool saveValue, float value, float min = 0.25F, float max = 5F, float increment = 0.25F)
+        public static CustomNumberOption AddNumber(string id, string name, bool saveValue, float value, float min = 0.25F, float max = 5F, float increment = 0.25F, bool indent=false)
         {
-            return new CustomNumberOption(id, name, saveValue, value, min, max, increment);
+            return new CustomNumberOption(id, name, saveValue, value, min, max, increment, indent);
         }
 
         /// <summary>
@@ -305,6 +313,12 @@ namespace Essentials.Options
         {
             return AddNumber(id, name, true, value, min, max, increment);
         }
+        
+        public static CustomNumberOption AddNumber(bool indent, string id, string name, float value, float min = 0.25F, float max = 5F, float increment = 0.25F)
+        {
+            return AddNumber(id, name, true, value, min, max, increment, indent);
+        }
+
 
         /// <summary>
         /// Adds a number option.
@@ -493,7 +507,7 @@ namespace Essentials.Options
                 {
                     float newValue = (float)Value;
 
-                    number.Value = number.oldValue = newValue;
+                    number.Value = number.Field_3 = newValue;
                     number.ValueText.Text = ToString();
                 }
                 else if (GameSetting is StringOption str)
@@ -562,6 +576,20 @@ namespace Essentials.Options
         }
     }
 
+
+    public class CustomHeaderOption : CustomOption
+    {
+        protected internal CustomHeaderOption(string id, string name) : base(id, name, false, CustomOptionType.Header, 0)
+        {
+        }
+
+        private protected override void GameOptionCreated(OptionBehaviour o)
+        {
+            if (o is not ToggleOption toggle) return;
+
+            toggle.TitleText.Text = Name;
+        }
+    }
     /// <summary>
     /// A derivative of <see cref="CustomOption"/>, handling toggle options.
     /// </summary>
@@ -699,7 +727,7 @@ namespace Essentials.Options
         /// <param name="min">The lowest value permitted, may be overriden if <paramref name="value"/> is lower</param>
         /// <param name="max">The highest value permitted, may be overriden if <paramref name="value"/> is higher</param>
         /// <param name="increment">The increment or decrement steps when <see cref="CustomNumberOption.Increase"/> or <see cref="CustomNumberOption.Decrease"/> are called</param>
-        protected internal CustomNumberOption(string id, string name, bool saveValue, float value, float min = 0.25F, float max = 5F, float increment = 0.25F) : base(id, name, saveValue, CustomOptionType.Number, value)
+        protected internal CustomNumberOption(string id, string name, bool saveValue, float value, float min = 0.25F, float max = 5F, float increment = 0.25F, bool indent=false) : base(id, name, saveValue, CustomOptionType.Number, value)
         {
             Min = Math.Min(value, min);
             Max = Math.Max(value, max);
@@ -715,6 +743,7 @@ namespace Essentials.Options
             SetValue(ConfigEntry == null ? GetDefaultValue() : ConfigEntry.Value, false);
 
             StringFormat = (sender, value) => value.ToString();
+            Indent = indent;
         }
 
         private protected override OptionOnValueChangedEventArgs OnValueChangedEventArgs(object value, object oldValue)
@@ -734,7 +763,7 @@ namespace Essentials.Options
             number.TitleText.Text = Name;
             number.ValidRange = new FloatRange(Min, Max);
             number.Increment = Increment;
-            number.Value = number.oldValue = GetValue();
+            number.Value = number.Field_3 = GetValue();
             number.ValueText.Text = ToString();
         }
 

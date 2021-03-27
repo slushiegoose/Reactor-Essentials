@@ -106,6 +106,18 @@ namespace Essentials.Options
 
                     if (Debug) EssentialsPlugin.Logger.LogInfo($"Option \"{option.Name}\" was created");
                 }
+                else if (option.Type == CustomOptionType.Header)
+                {
+                    if (toggleOption == null) continue;
+
+                    ToggleOption toggle = Object.Instantiate(toggleOption, toggleOption.transform.parent).DontDestroy();
+                    toggle.transform.localPosition = new Vector3(toggle.transform.localPosition.x, lowestY - ++i * 0.5F, toggle.transform.localPosition.z);
+                    toggle.transform.GetChild(1).gameObject.SetActive(false);
+                    toggle.transform.GetChild(2).gameObject.SetActive(false);
+
+                    option.OnGameOptionCreated(toggle);
+                    options.Add(toggle);
+                }
             }
 
             return options;
@@ -131,6 +143,7 @@ namespace Essentials.Options
                 //EssentialsPlugin.Logger.LogInfo($"__instance.Children.Count2 {__instance.Children.Count}");
             }
         }
+        
 
         [HarmonyPatch(typeof(GameOptionsMenu), nameof(GameOptionsMenu.Update))]
         private class GameOptionsMenuPatchUpdate
@@ -140,23 +153,7 @@ namespace Essentials.Options
                 __instance.GetComponentInParent<Scroller>().YBounds.max = -0.5F + __instance.Children.Length * 0.4F;
             }
         }
-
-        [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.Method_24))] //ToHudString
-        private static class GameOptionsDataPatch
-        {
-            private static void Postfix(ref string __result)
-            {
-                StringBuilder builder = new StringBuilder(__result);
-                if (ShamelessPlug) builder.AppendLine("[FF1111FF]DorCoMaNdO on GitHub/Twitter/Twitch[]");
-                foreach (CustomOption option in Options) if (option.HudVisible) builder.AppendLine($"{option.Name}: {option}[]");
-
-                //for (int i = 0; i < 50; i++) builder.AppendLine($"{i}");
-
-                __result = builder.ToString();
-
-                if (LobbyTextScroller && __result.Count(c => c == '\n') > 37) __result = __result.Insert(__result.IndexOf('\n'), " (Scroll for more)");
-            }
-        }
+        
 
         private static bool OnEnable(OptionBehaviour opt)
         {
